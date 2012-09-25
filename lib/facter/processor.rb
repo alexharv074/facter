@@ -6,7 +6,8 @@
 # Resolution:
 #   On Linux and kFreeBSD, parse '/proc/cpuinfo' for each processor.
 #   On AIX, parse the output of 'lsdev' for its processor section.
-#   On Solaris, parse the output of 'kstat' for each processor.
+#   On Solaris (after Solaris 8), parse the output of 'kstat' for each processor.
+#   On Solaris (prior to Solaris 8), count lines in 'psrinfo'.
 #   On OpenBSD, use 'uname -p' and the sysctl variable for 'hw.ncpu' for CPU
 #   count.
 #
@@ -168,7 +169,12 @@ end
 Facter.add("processorcount") do
   confine :kernel => :sunos
   setcode do
-    kstat = Facter::Util::Resolution.exec("/usr/bin/kstat cpu_info")
-    kstat.scan(/\bcore_id\b\s+\d+/).uniq.length
+    if %w(5.7 5.6 5.5.1).include? Facter.value(:kernelrelease)
+      psrinfo = Facter::Util::Resolution.exec("/usr/sbin/psrinfo")
+      psrinfo.lines.count
+    else
+      kstat = Facter::Util::Resolution.exec("/usr/bin/kstat cpu_info")
+      kstat.scan(/\bcore_id\b\s+\d+/).uniq.length
+    end
   end
 end

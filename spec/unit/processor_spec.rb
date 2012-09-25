@@ -75,13 +75,21 @@ describe "Processor facts" do
     it "should detect the correct processor count on x86_64" do
       fixture_data = File.read(fixtures('processorcount','solaris-x86_64-kstat-cpu-info'))
       Facter::Util::Resolution.expects(:exec).with("/usr/bin/kstat cpu_info").returns(fixture_data)
+      Facter.fact(:kernelrelease).stubs(:value).returns("5.10")
       Facter.fact(:processorcount).value.should == 8
     end
 
     it "should detect the correct processor count on sparc" do
       fixture_data = File.read(fixtures('processorcount','solaris-sparc-kstat-cpu-info'))
       Facter::Util::Resolution.expects(:exec).with("/usr/bin/kstat cpu_info").returns(fixture_data)
+      Facter.fact(:kernelrelease).stubs(:value).returns("5.10")
       Facter.fact(:processorcount).value.should == 8
+    end
+
+    it "should detect the correct processor count on legacy Solaris too" do
+      Facter::Util::Resolution.expects(:exec).with("/usr/sbin/psrinfo").returns("0       on-line   since 12/30/09 17:31:57")
+      Facter.fact(:kernelrelease).stubs(:value).returns("5.7")
+      Facter.fact(:processorcount).value.should == 1
     end
   end
 
