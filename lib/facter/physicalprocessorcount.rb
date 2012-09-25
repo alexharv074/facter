@@ -65,8 +65,14 @@ end
 
 Facter.add('physicalprocessorcount') do
   confine :kernel => :sunos
-
   setcode do
-    Facter::Util::Resolution.exec("/usr/sbin/psrinfo -p")
+    if %w(5.7 5.6 5.5.1).include? Facter.value(:kernelrelease)
+      # legacy Solaris did not implement psrinfo -p; all
+      # processors were physical in those days.
+      p = Facter::Util::Resolution.exec("/usr/sbin/psrinfo")
+      p.lines.count
+    else
+      Facter::Util::Resolution.exec("/usr/sbin/psrinfo -p")
+    end
   end
 end

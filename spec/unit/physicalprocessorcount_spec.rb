@@ -48,9 +48,17 @@ describe "Physical processor count facts" do
   end
 
   describe "on solaris" do
-    it "should use the output of psrinfo" do
+    it "should use the output of psrinfo -p on versions that support this" do
       Facter.fact(:kernel).stubs(:value).returns(:sunos)
+      Facter.fact(:kernelrelease).stubs(:value).returns("5.10")
       Facter::Util::Resolution.expects(:exec).with("/usr/sbin/psrinfo -p").returns(1)
+      Facter.fact(:physicalprocessorcount).value.should == 1
+    end
+
+    it "should use psrinfo on older solaris" do
+      Facter.fact(:kernel).stubs(:value).returns(:sunos)
+      Facter.fact(:kernelrelease).stubs(:value).returns("5.7")
+      Facter::Util::Resolution.expects(:exec).with("/usr/sbin/psrinfo").returns("0       on-line   since 12/30/09 17:31:57")
       Facter.fact(:physicalprocessorcount).value.should == 1
     end
   end
